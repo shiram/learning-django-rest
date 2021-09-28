@@ -1,4 +1,3 @@
-from typing_extensions import Required
 from django.contrib.auth.models import User, Group
 from pygments import styles
 from rest_framework import serializers
@@ -14,13 +13,16 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
         model = Group
         fields = ['url', 'name']
 
-class SnippetSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    title = serializers.CharField(required=False, allow_blank=True, max_length=100)
-    code = serializers.CharField(style={'base_template': 'textarea.html'})
-    linenos = serializers.BooleanField(required=False)
-    language = serializers.ChoiceField(choices=LANGUAGE_CHOICES, default='python')
-    style = serializers.ChoiceField(choices=STYLE_CHOICES, default='friendly')
+class SnippetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Snippet
+        fields = ['id', 'title', 'code', 'linenos', 'language', 'style']
+    # id = serializers.IntegerField(read_only=True)
+    # title = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    # code = serializers.CharField(style={'base_template': 'textarea.html'})
+    # linenos = serializers.BooleanField(required=False)
+    # language = serializers.ChoiceField(choices=LANGUAGE_CHOICES, default='python')
+    # style = serializers.ChoiceField(choices=STYLE_CHOICES, default='friendly')
 
     def create(self, validated_data):
         """
