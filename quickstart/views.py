@@ -1,3 +1,4 @@
+from django.db.models import query
 from django.shortcuts import render
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
@@ -20,6 +21,10 @@ from rest_framework.views import APIView
 
 from rest_framework import mixins
 from rest_framework import generics
+from rest_framework.reverse import reverse
+from rest_framework import renderers
+
+from quickstart.permissions import IsOwnerOrReadOnly
 
 #Function views
 @api_view(['GET', 'POST'])
@@ -66,6 +71,16 @@ def snippet_detail(request, pk, format=None):
     elif request.method == 'DELETE':
         snippet.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+"""
+API root 
+"""
+@api_view(['GET'])
+def api_root(request, format=None):
+    return Response({
+        'bauser': reverse('user-list', request=request, format=format),
+        'snippets': reverse('snippet-list', request=request, format=format)
+    })
 
 # Class Views
 class SnippetList(APIView):
@@ -144,6 +159,8 @@ class SnippetListGeneric(generics.ListCreateAPIView):
     queryset = Snippet.objects.all()
     serializer_class = SnippetSerializer
 
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
@@ -151,6 +168,16 @@ class SnippetDetailGeneric(generics.RetrieveUpdateDestroyAPIView):
     queryset = Snippet.objects.all()
     serializer_class = SnippetSerializer
 
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+
+class SnippetHighlight(generics.GenericAPIView):
+    queryset = Snippet.objects.all()
+    renderer_classes = [renderers.StaticHTMLRenderer]
+
+    def get(self, request, *args, **kwargs):
+        snippet = self.get_object()
+        return Response(snippet.highlighted)
 
 class UserViewSet(viewsets.ModelViewSet):
     """
