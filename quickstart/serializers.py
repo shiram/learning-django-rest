@@ -16,13 +16,14 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
 class SnippetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Snippet
-        fields = ['id', 'title', 'code', 'linenos', 'language', 'style']
+        fields = ['id', 'title', 'code', 'linenos', 'language', 'style', 'owner']
     # id = serializers.IntegerField(read_only=True)
     # title = serializers.CharField(required=False, allow_blank=True, max_length=100)
     # code = serializers.CharField(style={'base_template': 'textarea.html'})
     # linenos = serializers.BooleanField(required=False)
     # language = serializers.ChoiceField(choices=LANGUAGE_CHOICES, default='python')
     # style = serializers.ChoiceField(choices=STYLE_CHOICES, default='friendly')
+    owner = serializers.ReadOnlyField(source='owner.username')
 
     def create(self, validated_data):
         """
