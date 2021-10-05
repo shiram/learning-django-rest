@@ -24,6 +24,8 @@ from rest_framework import generics
 from rest_framework.reverse import reverse
 from rest_framework import renderers
 
+from rest_framework.decorators import action
+
 from quickstart.permissions import IsOwnerOrReadOnly
 
 #Function views
@@ -75,12 +77,12 @@ def snippet_detail(request, pk, format=None):
 """
 API root 
 """
-@api_view(['GET'])
-def api_root(request, format=None):
-    return Response({
-        'bauser': reverse('user-list', request=request, format=format),
-        'snippets': reverse('snippet-list', request=request, format=format)
-    })
+# @api_view(['GET'])
+# def api_root(request, format=None):
+#     return Response({
+#         'bauser': reverse('user-list', request=request, format=format),
+#         'snippets': reverse('snippet-list', request=request, format=format)
+#     })
 
 # Class Views
 class SnippetList(APIView):
@@ -179,7 +181,25 @@ class SnippetHighlight(generics.GenericAPIView):
         snippet = self.get_object()
         return Response(snippet.highlighted)
 
-class UserViewSet(viewsets.ModelViewSet):
+class SnippetViewSet(viewsets.ModelViewSet):
+    """
+       This viewset automatically provides list , create, retrieve, update and destroy actions
+       Additionally we also provide an extra highlight action 
+    """
+    queryset = Snippet.objects.all()
+    serializer_class = SnippetSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    @action(detail=True, renderer_classes=[renderers.StaticHTMLRenderer])
+    def highlight(self, request, *args, **kwargs):
+        snippet = self.get_object()
+        return Response(snippet.highlighted)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+    
+
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows users to be viewd or edited.
     """
@@ -188,7 +208,7 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class GroupViewSet(viewsets.ModelViewSet):
+class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows groups to be viewed or edited.
     """
